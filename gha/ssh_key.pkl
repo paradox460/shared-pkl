@@ -1,0 +1,20 @@
+
+import "https://cdn.jsdelivr.net/gh/StefMa/pkl-gha@main/Workflow.pkl"
+
+class SSHKey extends Workflow.Step {
+  name = "Add SSH Key"
+  hidden secret_name: String = "SSH_KEY"
+  hidden remote_host: String
+
+  env = new Workflow.EnvironmentVariables {
+    ["SSH_AUTH_SOCK"] = "/tmp/ssh_agent.sock"
+  }
+  run = """
+    mkdir -p /home/runner/.ssh
+    ssh-keyscan \(remote_host) >> /home/runner/.ssh/known_hosts
+    echo "${{ secrets.\(secret_name) }}" > /home/runner/.ssh/github_actions
+    chmod 600 /home/runner/.ssh/github_actions
+    ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+    ssh-add /home/runner/.ssh/github_actions
+  """
+}
